@@ -11,7 +11,7 @@
                 class="color"
                 @click="changeColor(color)"
             />
-            <button @click="$socket.client.emit('clearCanvas',roomId)">X</button>
+            <button @click="clear">X</button>
             <button @click="current.width=3">3</button>
             <button @click="current.width=7">7</button>
             <button @click="current.width=10">10</button>
@@ -62,22 +62,29 @@ export default {
             // this.context.drawImage(image, 0, 0);
         }
     },
-    props:['roomId','image64'],
+    props:['roomId','image64','myTurn'],
     methods: {
+        clear() {
+            if(!this.myTurn) return
+            this.$socket.client.emit('clearCanvas',this.roomId)
+        },
         clearCanvas() {
-            this.context.clearRect(0, 0, this.board.width, this.board.height);
+           this.context.clearRect(0, 0, this.board.width, this.board.height);
         },
         onMouseDown(e){
+            if(!this.myTurn) return
             this.drawing = true;
             this.current.x = e.clientX-this.board.getBoundingClientRect().x
             this.current.y = e.clientY -this.board.getBoundingClientRect().y
         },
         onMouseUp(e){
+            if(!this.myTurn) return
             if (!this.drawing) { return; }
             this.drawing = false;
             this.drawLine(this.current.x, this.current.y,e.clientX-this.board.getBoundingClientRect().x, e.clientY -this.board.getBoundingClientRect().y,{color:this.current.color}, true);
         },
         onMouseMove(e){
+            if(!this.myTurn) return
             if (!this.drawing) { return; }
             this.drawLine(this.current.x, this.current.y,e.clientX-this.board.getBoundingClientRect().x, e.clientY -this.board.getBoundingClientRect().y,{color:this.current.color}, true);
             this.current.x = e.clientX-this.board.getBoundingClientRect().x

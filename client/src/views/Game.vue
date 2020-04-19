@@ -43,6 +43,7 @@
         <Whiteboard 
           :roomId="roomId"
           :image64="image64"
+          :myTurn="turn.id==id"
         />
       </b-col>
       <b-col cols="4" class="h-100">
@@ -71,7 +72,8 @@ export default {
     image64:'',
     turn:'',
     round:1,
-    started:false
+    started:false,
+    timeUp:false
   }),
   created() {
     this.roomId = this.$route.params.id
