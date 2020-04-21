@@ -1,7 +1,8 @@
 <template>
   <div class="h-100 d-flex flex-column">
     <b-row class="w-100 top d-flex align-items-center">
-      <b-col cols="2">Time {{`${turn.username}'s turn`}} Round: {{round}}</b-col>
+      <b-col cols="2"><div class="time">{{time}}</div>
+         Round: {{round}}</b-col>
       <b-col cols="9" class="text-center"><span class="options">{{optionWord}}</span></b-col>
       <b-col cols="1">
         <button 
@@ -23,10 +24,11 @@
             <b-avatar :title="a"/>
             <p>
               {{player.username}}
+              Points : {{player.points}}
             </p>
           </div>
           <div>
-            <span v-if="player.playerId==turn.id"><img src="https://img.icons8.com/cute-clipart/64/000000/pencil.png"/></span>
+            <span v-if="player.id==turn.id"><img class="pen" src="https://img.icons8.com/cute-clipart/64/000000/pencil.png"/></span>
           </div>
           
         </div>
@@ -34,16 +36,20 @@
       </b-col>
       <b-col cols="7" class="rel">
         <button @click="startGame" v-if="!started">Start</button>
-        <b-form-input 
+        <!-- <b-form-input 
           placeholder="Enter the word"
           v-model="word" 
           @keyup.enter.prevent="sendWord"
           v-if="turn.id==id"
-        />
+        /> -->
         <Whiteboard 
           :roomId="roomId"
           :image64="image64"
           :myTurn="turn.id==id"
+          :turnOf="turn"
+          :players="players"
+          :showScoreBoard="showScoreBoard"
+          :showWordBox="showWordBox"
         />
       </b-col>
       <b-col cols="4" class="h-100">
@@ -56,7 +62,6 @@
 <script>
 import ChatBox from '../components/ChatBox'
 import Whiteboard from '../components/Whiteboard'
-
 export default {
   name: 'Home',
   components: {
@@ -73,7 +78,11 @@ export default {
     turn:'',
     round:1,
     started:false,
-    timeUp:false
+    timeUp:false,
+    showScoreBoard:false,
+    showWordBox:false,
+    time:80,
+    timer:''
   }),
   created() {
     this.roomId = this.$route.params.id
@@ -86,15 +95,13 @@ export default {
   methods: {
     startGame() {
       this.$socket.client.emit('start',this.roomId);
+      this.$socket.client.emit('getWord',this.roomId);
     },
-    sendWord() {
-      if (!this.word) return 
-      this.$socket.client.emit('sendWord',{
-        roomId:this.$route.params.id,
-        word:this.word
-      })
-    },
-
+    startTimer() {
+      this.timer = setInterval(()=> {
+        this.time-=1
+      },1000)
+    }
   },
   sockets: {
     noRoom() {
@@ -112,13 +119,19 @@ export default {
       } else {
         this.optionWord = word.optionWord
       }
+      this.startTimer()
     },
     timeUp(players) {
       this.optionWord=''
-      console.log(players)
+      this.showScoreBoard=true
+      this.players=players
+      this.time = 80
+      clearInterval(this.timer)
+      // console.log(players)
     },
     start(player) {
       this.turn = player
+      this.showWordBox=true
       // console.log(player,'turn')
     },
     rounds(round) {
@@ -129,6 +142,12 @@ export default {
     },
     myId(id) {
       this.id = id
+    },
+    closeWordBox() {
+      this.showWordBox = false
+    },
+    showScoreboard(data) {
+      this.showScoreBoard = data
     }
     // image(image64) {
     //   this.image64=image64
@@ -149,5 +168,17 @@ export default {
 .rel{
   position: relative;
 }
-
+.time {
+  border:2px solid black;
+  height: 30px;
+  width: 30px;
+  border-radius:30px;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+}
+.pen {
+  width:30px;
+  height:30px;
+}
 </style>

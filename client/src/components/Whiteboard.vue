@@ -1,5 +1,10 @@
 <template>
     <div class="a" ref="parent">
+        <div class="board">
+            <canvas class="whiteboard" ref="whiteboard"></canvas> 
+            <Scoreboard v-if="showScoreBoard" :players="players"/>
+            <Wordbox v-if="showWordBox" :myTurn="myTurn" :turnOf="turnOf"/>
+        </div>
         <div class="colors">
             <div 
                 v-for="color in colors" 
@@ -17,12 +22,18 @@
             <button @click="current.width=10">10</button>
             <button @click="current.width=13">13</button>
         </div>
-        <canvas class="whiteboard" ref="whiteboard"></canvas>
     </div>
 </template>
 
 <script>
+import Scoreboard from './Scoreboard'
+import Wordbox from './Wordbox'
+
 export default {
+    components: {
+        Scoreboard,
+        Wordbox
+    },
     mounted() {
         this.board=this.$refs.whiteboard
         this.context=this.board.getContext('2d')
@@ -32,14 +43,12 @@ export default {
         this.board.addEventListener('mousemove', this.throttle(this.onMouseMove,10), false);
         window.addEventListener('resize', this.onResize, false);
         this.onResize();
-
         // Todo : imagebase64
         // var image = new Image();
         // image.src = this.image64
         // console.log(this.image64);
         
         // this.context.drawImage(image, 0, 0);
-
     },
     data:()=>({
         drawing:false,
@@ -51,7 +60,7 @@ export default {
             width:3
         },
         context:'',
-        colors:['black','red','white','green','pink','brown','yellow','blue']
+        colors:['black','red','white','green','pink','brown','yellow','blue'],
     }),
     watch: {
         image64:function () {
@@ -62,7 +71,7 @@ export default {
             // this.context.drawImage(image, 0, 0);
         }
     },
-    props:['roomId','image64','myTurn'],
+    props:['roomId','image64','myTurn',"players","showScoreBoard","showWordBox","turnOf"],
     methods: {
         clear() {
             if(!this.myTurn) return
@@ -104,11 +113,9 @@ export default {
             this.context.lineWidth = width? width: this.current.width;
             this.context.stroke();
             this.context.closePath();
-
             if (!emit) { return; }
             var w = this.board.width;
             var h = this.board.height;
-
             this.$socket.client.emit('drawing', {
                 x0: x0 / w,
                 y0: y0 / h,
@@ -124,7 +131,6 @@ export default {
             var previousCall = new Date().getTime();
             return function() {
             var time = new Date().getTime();
-
             if ((time - previousCall) >= delay) {
                 previousCall = time;
                 callback.apply(null, arguments);
@@ -155,19 +161,30 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
+.board {
+    height: 100%;
+    width: 100%;
+    border:1px solid red;
+    position: relative;
+    top:0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+}
+
 .whiteboard {
   height: 100%;
   width: 100%;
-  position: absolute;
   top:0;
   left: 0;
   bottom: 0;
   right: 0;
   border: 1px solid red;
 }
+
 .a {
-    position: relative;
+    /* position: relative; */
     height:100%;
     border:2px yellow solid;
 }
@@ -175,13 +192,11 @@ export default {
   position: fixed;
   bottom:0
 }
-
 .color {
   display: inline-block;
   height: 48px;
   width: 48px;
 }
-
 .color.black { background-color: black; }
 .color.red { background-color: red; }
 .color.green { background-color: green; }
