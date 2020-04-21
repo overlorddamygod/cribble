@@ -9,7 +9,7 @@ import io from 'socket.io-client';
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-const socket = io(`http://localhost:3000`);
+const socket = io(window.location.hostname==="localhost"? `http://localhost:3000` : `https://lit-island-07096.herokuapp.com/` );
 
 Vue.use(VueSocketIOExt, socket);
 Vue.use(BootstrapVue)
